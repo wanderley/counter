@@ -8,12 +8,14 @@
 (define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
-(struct counter [time paused? finished?])
-(struct state [last-update counter finished?])
+(struct counter [time up? paused? finished?])
+(struct state [last-update counter reseted-counter finished?])
 
 (define (state-time s) (counter-time (state-counter s)))
 (define (state->seconds s) (quotient (state-time s) 60))
 (define (state->minutes s) (remainder (state-time s) 60))
+
+(define (mm-ss mm ss) (+ (* 60 mm) ss))
 
 (define (state->minutes-string s)
   (format "~a:~a"
@@ -25,8 +27,7 @@
   (cond
     [(key=? a-key "r")
      (struct-copy state s
-                  [counter (struct-copy counter (state-counter s)
-                                        [time 0])])]
+                  [counter (state-reseted-counter s)])]
     [(key=? a-key "p")
      (struct-copy state s
                   [counter (struct-copy counter (state-counter s)
@@ -42,9 +43,10 @@
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
+     (define op (if (counter-up? (state-counter s)) - +))
      (struct-copy state s
                   [counter (struct-copy counter (state-counter s)
-                                        [time (+ (counter-time (state-counter s)) diff)])]
+                                        [time (max 0 (op (counter-time (state-counter s)) diff))])]
                   [last-update seconds])]))
 
 
@@ -59,10 +61,13 @@
   (rectangle WIDTH HEIGHT 'solid (if (counter-paused? (state-counter s)) 'gray 'black)))
 
 
-(big-bang (state (current-seconds) (counter 0 #f #f) #f)
-          [name "Simple Counter"]
-          [on-tick tick]
-          [on-key change]
-          [to-draw render]
-          [stop-when state-finished?]
-          [close-on-stop #t])
+(define (start! c)
+  (big-bang (state (current-seconds) c c #f)
+            [name "Simple Counter"]
+            [on-tick tick]
+            [on-key change]
+            [to-draw render]
+            [stop-when state-finished?]
+            [close-on-stop #t]))
+
+(start! (counter (mm-ss 1 00) #t #f #f))
