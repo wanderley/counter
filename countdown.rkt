@@ -8,8 +8,11 @@
 (define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
-(struct counter [time up? paused? finished?])
-(struct state [last-update counter reseted-counter finished?])
+(struct counter [time default-time up? paused? finished?])
+(struct state [last-update counter finished?])
+
+(define (counter-up mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #t #t #f))
+(define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
 
 (define (counter->seconds c) (quotient (counter-time c) 60))
 (define (counter->minutes c) (remainder (counter-time c) 60))
@@ -24,7 +27,8 @@
   (cond
     [(key=? a-key "r")
      (struct-copy state s
-                  [counter (state-reseted-counter s)])]
+                  [counter (struct-copy counter (state-counter s)
+                                        [time (counter-default-time (state-counter s))])])]
     [(key=? a-key "p")
      (struct-copy state s
                   [counter (struct-copy counter (state-counter s)
@@ -40,7 +44,7 @@
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
-     (define op (if (counter-up? (state-counter s)) - +))
+     (define op (if (counter-up? (state-counter s)) + -))
      (struct-copy state s
                   [counter (struct-copy counter (state-counter s)
                                         [time (max 0 (op (counter-time (state-counter s)) diff))])]
@@ -59,7 +63,7 @@
 
 
 (define (start! c)
-  (big-bang (state (current-seconds) c c #f)
+  (big-bang (state (current-seconds) c #f)
             [name "Simple Counter"]
             [on-tick tick]
             [on-key change]
@@ -67,4 +71,4 @@
             [stop-when state-finished?]
             [close-on-stop #t]))
 
-(start! (counter (mm-ss 1 00) #t #f #f))
+(start! (counter-down 10 00))
