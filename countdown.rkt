@@ -36,7 +36,9 @@
 
 (define (tick s)
   (cond
-    [(counter-paused? (state-counter s)) s]
+    [(counter-paused? (state-counter s))
+     (struct-copy state s
+                  [last-update (current-seconds)])]
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
