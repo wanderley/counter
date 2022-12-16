@@ -8,6 +8,11 @@
 
 (struct state [time paused? finished?])
 
+(define (state->minutes-string s)
+  (format "~a:~a"
+          (~r (quotient (state-time s) 60) #:min-width 2 #:pad-string "0")
+          (~r (remainder (state-time s) 60) #:min-width 2 #:pad-string "0")))
+
 
 (define (change s a-key)
   (cond
@@ -24,12 +29,7 @@
 
 (define (render s)
   (overlay
-   (text/font (cond
-                [(or (zero? (state-time s)) (positive? (state-time s)))
-                 (format "~a:~a"
-                         (~r (quotient (state-time s) 60) #:min-width 2 #:pad-string "0")
-                         (~r (remainder (state-time s) 60) #:min-width 2 #:pad-string "0"))]
-                [else "00:00"])
+   (text/font (state->minutes-string s)
               240 'white
               "Mono" 'default 'normal 'bold #f)
    (render-background s)))
