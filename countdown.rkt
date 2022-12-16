@@ -41,7 +41,7 @@
 
 
 (big-bang (state 0 #f #f)
-          [name "Countdown"]
+          [name "Simple Counter"]
           [on-tick tick 1]
           [on-key change]
           [to-draw render]
