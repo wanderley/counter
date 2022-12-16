@@ -10,10 +10,13 @@
 
 (struct state [time paused? finished?])
 
+(define (state->seconds s) (quotient (state-time s) 60))
+(define (state->minutes s) (remainder (state-time s) 60))
+
 (define (state->minutes-string s)
   (format "~a:~a"
-          (~r (quotient (state-time s) 60) #:min-width 2 #:pad-string "0")
-          (~r (remainder (state-time s) 60) #:min-width 2 #:pad-string "0")))
+          (~r (state->seconds s) #:min-width 2 #:pad-string "0")
+          (~r (state->minutes s) #:min-width 2 #:pad-string "0")))
 
 
 (define (change s a-key)
