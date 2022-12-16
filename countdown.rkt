@@ -9,7 +9,7 @@
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
 (struct counter [time default-time up? paused? finished?])
-(struct state [last-update counter finished?])
+(struct state [last-update counter stop?])
 
 (define (counter-up mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #t #t #f))
 (define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
@@ -33,7 +33,7 @@
      (struct-copy state s
                   [counter (struct-copy counter (state-counter s)
                                         [paused? (not (counter-paused? (state-counter s)))])])]
-    [(key=? a-key "q") (struct-copy state s [finished? #t])]
+    [(key=? a-key "q") (struct-copy state s [stop? #t])]
     [else s]))
 
 (define (tick s)
@@ -68,7 +68,7 @@
             [on-tick tick]
             [on-key change]
             [to-draw render]
-            [stop-when state-finished?]
+            [stop-when state-stop?]
             [close-on-stop #t]))
 
 (start! (counter-down 10 00))
