@@ -8,8 +8,10 @@
 (define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
-(struct state [last-update time paused? finished?])
+(struct counter [time paused? finished?])
+(struct state [last-update counter finished?])
 
+(define (state-time s) (counter-time (state-counter s)))
 (define (state->seconds s) (quotient (state-time s) 60))
 (define (state->minutes s) (remainder (state-time s) 60))
 
@@ -21,19 +23,26 @@
 
 (define (change s a-key)
   (cond
-    [(key=? a-key "r") (struct-copy state s [time 0])]
-    [(key=? a-key "p") (struct-copy state s [paused? (not (state-paused? s))])]
+    [(key=? a-key "r")
+     (struct-copy state s
+                  [counter (struct-copy counter (state-counter s)
+                                        [time 0])])]
+    [(key=? a-key "p")
+     (struct-copy state s
+                  [counter (struct-copy counter (state-counter s)
+                                        [paused? (not (counter-paused? (state-counter s)))])])]
     [(key=? a-key "q") (struct-copy state s [finished? #t])]
     [else s]))
 
 (define (tick s)
   (cond
-    [(state-paused? s) s]
+    [(counter-paused? (state-counter s)) s]
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
      (struct-copy state s
-                  [time (+ (state-time s) diff)]
+                  [counter (struct-copy counter (state-counter s)
+                                        [time (+ (counter-time (state-counter s)) diff)])]
                   [last-update seconds])]))
 
 
@@ -45,10 +54,10 @@
    (render-background s)))
 
 (define (render-background s)
-  (rectangle WIDTH HEIGHT 'solid (if (state-paused? s) 'gray 'black)))
+  (rectangle WIDTH HEIGHT 'solid (if (counter-paused? (state-counter s)) 'gray 'black)))
 
 
-(big-bang (state (current-seconds) 0 #f #f)
+(big-bang (state (current-seconds) (counter 0 #f #f) #f)
           [name "Simple Counter"]
           [on-tick tick]
           [on-key change]
