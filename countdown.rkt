@@ -52,14 +52,14 @@
 
 
 (define (render s)
+  (render-counter (state-counter s)))
+
+(define (render-counter c)
   (overlay
-   (text/font (counter->minutes-string (state-counter s))
+   (text/font (counter->minutes-string c)
               240 'white
               "Mono" 'default 'normal 'bold #f)
-   (render-background s)))
-
-(define (render-background s)
-  (rectangle WIDTH HEIGHT 'solid (if (counter-paused? (state-counter s)) 'gray 'black)))
+   (rectangle WIDTH HEIGHT 'solid (if (counter-paused? c) 'gray 'black))))
 
 
 (define (start! c)
