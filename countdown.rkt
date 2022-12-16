@@ -8,7 +8,7 @@
 (define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
-(struct state [time paused? finished?])
+(struct state [last-update time paused? finished?])
 
 (define (state->seconds s) (quotient (state-time s) 60))
 (define (state->minutes s) (remainder (state-time s) 60))
@@ -29,7 +29,12 @@
 (define (tick s)
   (cond
     [(state-paused? s) s]
-    [else (struct-copy state s [time (add1 (state-time s))])]))
+    [else
+     (define seconds (current-seconds))
+     (define diff (- seconds (state-last-update s)))
+     (struct-copy state s
+                  [time (+ (state-time s) diff)]
+                  [last-update seconds])]))
 
 
 (define (render s)
@@ -43,9 +48,9 @@
   (rectangle WIDTH HEIGHT 'solid (if (state-paused? s) 'gray 'black)))
 
 
-(big-bang (state 0 #f #f)
+(big-bang (state (current-seconds) 0 #f #f)
           [name "Simple Counter"]
-          [on-tick tick 1]
+          [on-tick tick]
           [on-key change]
           [to-draw render]
           [stop-when state-finished?]
