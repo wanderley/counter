@@ -1,10 +1,12 @@
 #lang racket
 
+(require (only-in racket/gui
+                  get-display-size))
 (require 2htdp/image)
 (require 2htdp/universe)
 
-(define WIDTH  (/ 3360 3))
-(define HEIGHT (/ 1890 3))
+(define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
+(define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
 (struct state [time paused? finished?])
 
