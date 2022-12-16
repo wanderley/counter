@@ -44,11 +44,17 @@
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
-     (define op (if (counter-up? (state-counter s)) + -))
      (struct-copy state s
-                  [counter (struct-copy counter (state-counter s)
-                                        [time (max 0 (op (counter-time (state-counter s)) diff))])]
+                  [counter (tick-counter (state-counter s) diff)]
                   [last-update seconds])]))
+
+(define (tick-counter c diff)
+  (cond
+    [(counter-paused? c) c]
+    [else
+     (define op (if (counter-up? c) + -))
+     (struct-copy counter c
+                  [time (max 0 (op (counter-time c) diff))])]))
 
 
 (define (render s)
