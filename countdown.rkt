@@ -11,16 +11,13 @@
 (struct counter [time up? paused? finished?])
 (struct state [last-update counter reseted-counter finished?])
 
-(define (state-time s) (counter-time (state-counter s)))
-(define (state->seconds s) (quotient (state-time s) 60))
-(define (state->minutes s) (remainder (state-time s) 60))
-
-(define (mm-ss mm ss) (+ (* 60 mm) ss))
-
-(define (state->minutes-string s)
+(define (counter->seconds c) (quotient (counter-time c) 60))
+(define (counter->minutes c) (remainder (counter-time c) 60))
+(define (counter->minutes-string c)
   (format "~a:~a"
-          (~r (state->seconds s) #:min-width 2 #:pad-string "0")
-          (~r (state->minutes s) #:min-width 2 #:pad-string "0")))
+          (~r (counter->seconds c) #:min-width 2 #:pad-string "0")
+          (~r (counter->minutes c) #:min-width 2 #:pad-string "0")))
+(define (mm-ss mm ss) (+ (* 60 mm) ss))
 
 
 (define (change s a-key)
@@ -52,7 +49,7 @@
 
 (define (render s)
   (overlay
-   (text/font (state->minutes-string s)
+   (text/font (counter->minutes-string (state-counter s))
               240 'white
               "Mono" 'default 'normal 'bold #f)
    (render-background s)))
