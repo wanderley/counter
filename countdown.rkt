@@ -3,13 +3,11 @@
 (require 2htdp/image)
 (require 2htdp/universe)
 
-(struct state [time paused? finished?])
-
 (define WIDTH  (/ 3360 3))
 (define HEIGHT (/ 1890 3))
-(define BACKGROUND
-  (freeze
-   (rectangle WIDTH HEIGHT 'solid 'black)))
+
+(struct state [time paused? finished?])
+
 
 (define (change s a-key)
   (cond
@@ -23,6 +21,7 @@
     [(state-paused? s) s]
     [else (struct-copy state s [time (add1 (state-time s))])]))
 
+
 (define (render s)
   (overlay
    (text/font (cond
@@ -33,7 +32,11 @@
                 [else "00:00"])
               240 'white
               "Mono" 'default 'normal 'bold #f)
-   BACKGROUND))
+   (render-background s)))
+
+(define (render-background s)
+  (rectangle WIDTH HEIGHT 'solid (if (state-paused? s) 'gray 'black)))
+
 
 (big-bang (state 0 #f #f)
           [name "Countdown"]
