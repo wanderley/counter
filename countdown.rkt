@@ -8,31 +8,36 @@
 (define WIDTH  (/ (let-values ([(w _) (get-display-size)]) w) 3))
 (define HEIGHT (/ (let-values ([(_ h) (get-display-size)]) h) 3))
 
+(define (mm-ss mm ss) (+ (* 60 mm) ss))
+
 (struct counter [time default-time up? paused? finished?])
 (struct state [last-update counter stop?])
 
 (define (counter-up mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #t #t #f))
 (define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
-
+(define (counter-reset c) (struct-copy counter c [time (counter-default-time c)]))
+(define (counter-pause c) (struct-copy counter c [paused? (not (counter-paused? c))]))
+(define (counter-tick c diff)
+  (cond
+    [(counter-paused? c) c]
+    [else
+     (define op (if (counter-up? c) + -))
+     (struct-copy counter c
+                  [time (max 0 (op (counter-time c) diff))])]))
 (define (counter->seconds c) (quotient (counter-time c) 60))
 (define (counter->minutes c) (remainder (counter-time c) 60))
 (define (counter->minutes-string c)
   (format "~a:~a"
           (~r (counter->seconds c) #:min-width 2 #:pad-string "0")
           (~r (counter->minutes c) #:min-width 2 #:pad-string "0")))
-(define (mm-ss mm ss) (+ (* 60 mm) ss))
 
 
 (define (change s a-key)
   (cond
     [(key=? a-key "r")
-     (struct-copy state s
-                  [counter (struct-copy counter (state-counter s)
-                                        [time (counter-default-time (state-counter s))])])]
+     (struct-copy state s [counter (counter-reset (state-counter s))])]
     [(key=? a-key "p")
-     (struct-copy state s
-                  [counter (struct-copy counter (state-counter s)
-                                        [paused? (not (counter-paused? (state-counter s)))])])]
+     (struct-copy state s [counter (counter-pause (state-counter s))])]
     [(key=? a-key "q") (struct-copy state s [stop? #t])]
     [else s]))
 
@@ -45,17 +50,8 @@
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
      (struct-copy state s
-                  [counter (tick-counter (state-counter s) diff)]
+                  [counter (counter-tick (state-counter s) diff)]
                   [last-update seconds])]))
-
-(define (tick-counter c diff)
-  (cond
-    [(counter-paused? c) c]
-    [else
-     (define op (if (counter-up? c) + -))
-     (struct-copy counter c
-                  [time (max 0 (op (counter-time c) diff))])]))
-
 
 (define (render s)
   (render-counter (state-counter s)))
