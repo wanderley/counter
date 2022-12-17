@@ -88,7 +88,7 @@
 (define (counter-background-color c primary?)
   (cond
     [(counter-paused? c) 'gray]
-    [(counter-finished? c) 'darkred]
+    [(counter-finished? c) (if primary? 'darkblue 'darkred)]
     [primary? 'black]
     [else 'darkgreen]))
 
