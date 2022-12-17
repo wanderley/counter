@@ -16,9 +16,9 @@
                secondary-counter
                stop?])
 
-(define (counter-up mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #t #t #f))
+(define (counter-up mm ss) (counter 0 (mm-ss mm ss) #t #t #f))
 (define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
-(define (counter-reset c) (struct-copy counter c [time (counter-default-time c)]))
+(define (counter-reset c) (struct-copy counter c [time (if (counter-up? c) 0 (counter-default-time c))]))
 (define (counter-pause c) (struct-copy counter c [paused? (not (counter-paused? c))]))
 (define (counter-tick c diff)
   (cond
