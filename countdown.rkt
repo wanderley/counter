@@ -11,7 +11,10 @@
 (define (mm-ss mm ss) (+ (* 60 mm) ss))
 
 (struct counter [time default-time up? paused? finished?])
-(struct state [last-update counter stop?])
+(struct state [last-update
+               primary-counter
+               secondary-counter
+               stop?])
 
 (define (counter-up mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #t #t #f))
 (define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
@@ -33,39 +36,53 @@
 
 
 (define (change s a-key)
+  (define pc (state-primary-counter s))
+  (define sc (state-secondary-counter s))
   (cond
     [(key=? a-key "r")
-     (struct-copy state s [counter (counter-reset (state-counter s))])]
+     (struct-copy state s [primary-counter (counter-reset pc)])]
+    [(key=? a-key "R")
+     (struct-copy state s [secondary-counter (counter-reset sc)])]
     [(key=? a-key "p")
-     (struct-copy state s [counter (counter-pause (state-counter s))])]
+     (struct-copy state s [primary-counter (counter-pause pc)])]
+    [(key=? a-key "P")
+     (struct-copy state s [secondary-counter (counter-pause sc)])]
     [(key=? a-key "q") (struct-copy state s [stop? #t])]
     [else s]))
 
 (define (tick s)
   (cond
-    [(counter-paused? (state-counter s))
+    [(counter-paused? (state-primary-counter s))
      (struct-copy state s
                   [last-update (current-seconds)])]
     [else
      (define seconds (current-seconds))
      (define diff (- seconds (state-last-update s)))
      (struct-copy state s
-                  [counter (counter-tick (state-counter s) diff)]
+                  [primary-counter (counter-tick (state-primary-counter s) diff)]
+                  [secondary-counter (counter-tick (state-secondary-counter s) diff)]
                   [last-update seconds])]))
 
 (define (render s)
-  (render-counter (state-counter s)))
+  (cond
+    [(false? (state-secondary-counter s))
+     (render-counter (state-primary-counter s) #t)]
+    [else
+     (above
+      (render-counter (state-primary-counter s) #f)
+      (render-counter (state-secondary-counter s) #f))]))
 
-(define (render-counter c)
+(define (render-counter c full-screen?)
   (overlay
    (text/font (counter->minutes-string c)
               240 'white
               "Mono" 'default 'normal 'bold #f)
-   (rectangle WIDTH HEIGHT 'solid (if (counter-paused? c) 'gray 'black))))
+   (rectangle WIDTH (/ HEIGHT (if full-screen? 1 2))
+              'solid (if (counter-paused? c) 'gray 'black))))
 
 
-(define (start! c)
-  (big-bang (state (current-seconds) c #f)
+(define (start! pc sc)
+  (big-bang (state (current-seconds) pc sc #f)
             [name "Simple Counter"]
             [on-tick tick]
             [on-key change]
@@ -73,4 +90,5 @@
             [stop-when state-stop?]
             [close-on-stop #t]))
 
-(start! (counter-down 10 00))
+(start! (counter-down 15 00)
+        (counter-up   02 00))
