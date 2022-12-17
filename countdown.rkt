@@ -66,19 +66,30 @@
 (define (render s)
   (cond
     [(false? (state-secondary-counter s))
-     (render-counter (state-primary-counter s) #t)]
+     (render-counter (state-primary-counter s) #t #t)]
     [else
      (above
-      (render-counter (state-primary-counter s) #f)
-      (render-counter (state-secondary-counter s) #f))]))
+      (render-counter (state-primary-counter s) #t #f)
+      (render-counter (state-secondary-counter s) #f #f))]))
 
-(define (render-counter c full-screen?)
+(define (render-counter c primary? full-screen?)
   (overlay
    (text/font (counter->minutes-string c)
-              240 'white
+              (if primary? 240 180) 'white
               "Mono" 'default 'normal 'bold #f)
    (rectangle WIDTH (/ HEIGHT (if full-screen? 1 2))
-              'solid (if (counter-paused? c) 'gray 'black))))
+              'solid (counter-background-color c primary?))))
+
+(define (counter-background-color c primary?)
+  (cond
+    [(counter-paused? c) 'gray]
+    [primary? 'black]
+    [(or (and (counter-up? c)
+              (> (counter-time c)
+                 (counter-default-time c)))
+         (and (not (counter-up? c)) (zero? (counter-time c))))
+     'darkred]
+    [else 'darkgreen]))
 
 
 (define (start! pc sc)
