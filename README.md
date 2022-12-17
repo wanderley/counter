@@ -10,4 +10,12 @@ There is one more thing that I know.  You won't find what you look for here, and
 
 The counter above is a native application written in Racket.  Do yourself a favor.  Learn at least one Lisp from the family.  They make trouble, but they are family.  Now, back to the application.  The counter has one or two counters running.  They serve my purpose of timeboxing discussions in some meetings.  Restriction promotes focus and creativity.  When you see that you have 2 minutes to make your point, your brain stop joking around and focus on the task at hand.  But why do you allow two counters?  The top counter tracks the total time to discuss an item, while the bottom one tracks the time a person has to comment about the item before passing the mic to someone else.  There is no rock science here.  It is not a typo, I wrote *rock* instead of *rocket* to test your attention.
 
+| Key | Action                       |
+|-----|------------------------------|
+| `r` | Reset primary counter        |
+| `p` | Start/Stop primary counter   |
+| `R` | Reset secondary counter      |
+| `P` | Start/Stop secondary counter |
+| `q` | Quit                         |
+
 Download this code, change the time of your counters in the call `start!` and execute it.  Ops, I forgot to mention.  You need a copy of [Racket Programming Language](https://racket-lang.org/).  Go grab one, google "how to run a racket program" and figure out the rest by yourself.  I believe in you.  Tchau!
