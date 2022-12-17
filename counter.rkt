@@ -10,14 +10,14 @@
 
 (define (mm-ss mm ss) (+ (* 60 mm) ss))
 
-(struct counter [time default-time up? paused? finished?])
+(struct counter [time default-time up? paused?])
 (struct state [last-update
                primary-counter
                secondary-counter
                stop?])
 
-(define (counter-up mm ss) (counter 0 (mm-ss mm ss) #t #t #f))
-(define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t #f))
+(define (counter-up mm ss) (counter 0 (mm-ss mm ss) #t #t))
+(define (counter-down mm ss) (counter (mm-ss mm ss) (mm-ss mm ss) #f #t))
 (define (counter-reset c) (struct-copy counter c [time (if (counter-up? c) 0 (counter-default-time c))]))
 (define (counter-pause c) (struct-copy counter c [paused? (not (counter-paused? c))]))
 (define (counter-tick c diff)
@@ -27,6 +27,11 @@
      (define op (if (counter-up? c) + -))
      (struct-copy counter c
                   [time (max 0 (op (counter-time c) diff))])]))
+(define (counter-finished? c)
+  (or (and (counter-up? c)
+           (> (counter-time c)
+              (counter-default-time c)))
+      (and (not (counter-up? c)) (zero? (counter-time c)))))
 (define (counter->seconds c) (quotient (counter-time c) 60))
 (define (counter->minutes c) (remainder (counter-time c) 60))
 (define (counter->minutes-string c)
@@ -83,12 +88,8 @@
 (define (counter-background-color c primary?)
   (cond
     [(counter-paused? c) 'gray]
+    [(counter-finished? c) 'darkred]
     [primary? 'black]
-    [(or (and (counter-up? c)
-              (> (counter-time c)
-                 (counter-default-time c)))
-         (and (not (counter-up? c)) (zero? (counter-time c))))
-     'darkred]
     [else 'darkgreen]))
 
 
